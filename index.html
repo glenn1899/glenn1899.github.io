@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock</title>
+<meta name="description" content="Analogue clocks for Toronto, Vancouver, and Beijing.">
+<meta name="theme-color" content="#e4dfd6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap">
+<style>
+  :root {
+    --color-studio: #e4dfd6;
+    --color-ink: #1c1b19;
+    --color-muted: #534e47;
+    --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  html {
+    color-scheme: light;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-studio);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background: color-mix(in srgb, #e23b12 22%, transparent);
+    color: var(--color-ink);
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .stage {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(2rem, 5vh, 3.5rem) 1.25rem;
+    overflow-x: clip;
+    background-color: var(--color-studio);
+    background-image:
+      radial-gradient(ellipse 68% 48% at 50% 40%, #f7f4ef 0%, transparent 68%),
+      radial-gradient(ellipse 110% 46% at 50% 118%, #cdc6b8 0%, transparent 58%);
+  }
+  .bench {
+    --hero: clamp(15rem, min(70vw, 50vh), 23rem);
+    --sat: clamp(7.35rem, min(36vw, 22vh), 10rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2.75rem, 6vh, 3.75rem);
+  }
+  .hero, .sat { display: flex; flex-direction: column; align-items: center; }
+  .pair {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: clamp(1.5rem, 8vw, 3rem);
+  }
+  .clock-wrap {
+    width: var(--sat);
+    filter:
+      drop-shadow(0 1px 1px rgba(48, 42, 34, 0.06))
+      drop-shadow(0 18px 22px rgba(48, 42, 34, 0.14));
+  }
+  .hero .clock-wrap { width: var(--hero); }
+  .clock { display: block; width: 100%; height: auto; overflow: visible; }
+  .city {
+    margin: 0.95rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--color-muted);
+  }
+  .hero .city { margin-top: 1.15rem; }
+  .date {
+    margin: 0.55rem 0 0;
+    font-size: clamp(1.0625rem, 2.2vw, 1.1875rem);
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    line-height: 1.4;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .numeral {
+    fill: var(--mark);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .hand { fill: var(--mark); }
+  .baton { stroke-linecap: butt; vector-effect: non-scaling-stroke; }
+  .baton-major { stroke: var(--mark); stroke-width: 1.75px; }
+  .baton-minor { stroke: var(--mark-minor); stroke-width: 1px; }
+  .second-line, .second-ring {
+    stroke: var(--second);
+    fill: none;
+    stroke-width: 1.35px;
+    vector-effect: non-scaling-stroke;
+  }
+  .second-line { stroke-linecap: round; }
+  .second-tail { fill: var(--second); }
+  .cap { fill: var(--mark); }
+  .cap-bore { fill: var(--dial); }
+  .clock-wrap[data-variant="toronto"] {
+    --dial: #f4f1ea; --dial-hi: #fbfaf7; --mark: #1c1b19;
+    --mark-minor: color-mix(in srgb, #1c1b19 38%, transparent);
+    --second: #e23b12; --bezel-hi: #f6f4f0; --bezel-mid: #c8c3ba; --bezel-lo: #8d887f;
+    --bezel-edge: rgba(55, 48, 38, 0.28); --lip: #2a2723;
+    --ring: rgba(255, 255, 255, 0.55); --vignette: 0.1;
+  }
+  .clock-wrap[data-variant="vancouver"] {
+    --dial: #e3eaee; --dial-hi: #f5f8f9; --mark: #1a2830;
+    --mark-minor: color-mix(in srgb, #1a2830 36%, transparent);
+    --second: #0f6e8c; --bezel-hi: #eef3f6; --bezel-mid: #9aadb8; --bezel-lo: #5c7180;
+    --bezel-edge: rgba(28, 46, 58, 0.34); --lip: #1a2830;
+    --ring: rgba(255, 255, 255, 0.5); --vignette: 0.1;
+  }
+  .clock-wrap[data-variant="beijing"] {
+    --dial: #2c261f; --dial-hi: #3d342c; --mark: #f4ebdf;
+    --mark-minor: color-mix(in srgb, #f4ebdf 40%, transparent);
+    --second: #e08a3a; --bezel-hi: #ead9c2; --bezel-mid: #a68562; --bezel-lo: #6b5340;
+    --bezel-edge: rgba(42, 28, 16, 0.45); --lip: #120e0b;
+    --ring: rgba(255, 236, 214, 0.28); --vignette: 0.28;
+  }
+  .crystal-hot { stop-color: white; stop-opacity: 0.22; }
+  .clock-wrap[data-variant="vancouver"] .crystal-hot { stop-opacity: 0.16; }
+  .clock-wrap[data-variant="beijing"] .crystal-hot { stop-opacity: 0.07; }
+  .crystal-fade { stop-color: white; stop-opacity: 0; }
+  .vignette-clear { stop-color: black; stop-opacity: 0; }
+  .vignette-edge { stop-color: black; stop-opacity: var(--vignette); }
+  @media (min-width: 960px) {
+    .bench {
+      --hero: clamp(17rem, 44vh, 25.5rem);
+      --sat: clamp(8.75rem, 23vh, 11.25rem);
+      flex-direction: row;
+      align-items: flex-start;
+      gap: clamp(2.25rem, 4.5vw, 5rem);
+    }
+    .pair { display: contents; }
+    .sat { margin-top: calc((var(--hero) - var(--sat)) / 2); }
+    .sat-van { order: 1; }
+    .hero { order: 2; }
+    .sat-bei { order: 3; }
+  }
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 class="sr-only">Clock</h1>
+  <div class="bench">
+    <div class="hero" id="slot-toronto"></div>
+    <div class="pair">
+      <div class="sat sat-van" id="slot-vancouver"></div>
+      <div class="sat sat-bei" id="slot-beijing"></div>
+    </div>
+  </div>
+</main>
+<script>
+(function () {
+  var ZONES = [
+    { id: "toronto", timeZone: "America/Toronto", city: "Toronto", hero: true },
+    { id: "vancouver", timeZone: "America/Vancouver", city: "Vancouver", hero: false },
+    { id: "beijing", timeZone: "Asia/Shanghai", city: "Beijing", hero: false }
+  ];
+  var HOUR = "M0-70C5.6-66 6.8-54 6.8-16L6.8 12C6.8 21 3.8 25 0 25C-3.8 25-6.8 21-6.8 12L-6.8-16C-6.8-54-5.6-66 0-70Z";
+  var MINUTE = "M0-104C4-100 4.4-90 4.4-22L4.4 14C4.4 21 2.4 25 0 25C-2.4 25-4.4 21-4.4 14L-4.4-22C-4.4-90-4-100 0-104Z";
+  var formatters = {};
+
+  function formatter(zone) {
+    if (!formatters[zone]) {
+      formatters[zone] = new Intl.DateTimeFormat("en-US", {
+        timeZone: zone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+      });
+    }
+    return formatters[zone];
+  }
+
+  function readHms(date, zone) {
+    var hour = 0, minute = 0, second = 0;
+    formatter(zone).formatToParts(date).forEach(function (part) {
+      if (part.type === "hour") hour = Number(part.value);
+      else if (part.type === "minute") minute = Number(part.value);
+      else if (part.type === "second") second = Number(part.value);
+    });
+    if (hour === 24) hour = 0;
+    return { hour: hour, minute: minute, second: second };
+  }
+
+  function numerals() {
+    var html = "";
+    for (var n = 1; n <= 12; n++) {
+      var rad = ((n * 30 - 90) * Math.PI) / 180;
+      var x = Math.round(Math.cos(rad) * 11600) / 100;
+      var y = Math.round(Math.sin(rad) * 11600) / 100;
+      html += '<text class="numeral" x="' + x + '" y="' + y + '" font-size="33">' + n + "</text>";
+    }
+    return html;
+  }
+
+  function ticks() {
+    var html = "";
+    for (var i = 0; i < 60; i++) {
+      var major = i % 5 === 0;
+      html += '<line x1="0" y1="' + (major ? -146 : -151) + '" x2="0" y2="-156" class="' +
+        (major ? "baton baton-major" : "baton baton-minor") + '" transform="rotate(' + (i * 6) + ')"/>';
+    }
+    return html;
+  }
+
+  function face(zone) {
+    var id = zone.id;
+    return (
+      '<div class="clock-wrap" data-variant="' + id + '" data-city="' + id + '" role="img" aria-label="' + zone.city + '">' +
+        '<svg class="clock" viewBox="0 0 400 400" aria-hidden="true">' +
+          "<defs>" +
+            '<linearGradient id="bezel-' + id + '" x1="18%" y1="0%" x2="82%" y2="100%">' +
+              '<stop offset="0%" stop-color="var(--bezel-hi)"/>' +
+              '<stop offset="42%" stop-color="var(--bezel-mid)"/>' +
+              '<stop offset="74%" stop-color="var(--bezel-lo)"/>' +
+              '<stop offset="100%" stop-color="var(--bezel-mid)"/>' +
+            "</linearGradient>" +
+            '<radialGradient id="dial-' + id + '" cx="50%" cy="40%" r="68%">' +
+              '<stop offset="0%" stop-color="var(--dial-hi)"/>' +
+              '<stop offset="100%" stop-color="var(--dial)"/>' +
+            "</radialGradient>" +
+            '<radialGradient id="crystal-' + id + '" cx="50%" cy="16%" r="58%">' +
+              '<stop class="crystal-hot" offset="0%"/>' +
+              '<stop class="crystal-fade" offset="58%"/>' +
+            "</radialGradient>" +
+            '<radialGradient id="vignette-' + id + '" cx="50%" cy="46%" r="64%">' +
+              '<stop class="vignette-clear" offset="68%"/>' +
+              '<stop class="vignette-edge" offset="100%"/>' +
+            "</radialGradient>" +
+          "</defs>" +
+          '<circle cx="200" cy="200" r="196" fill="url(#bezel-' + id + ')"/>' +
+          '<circle cx="200" cy="200" r="196" fill="none" stroke="var(--bezel-edge)" stroke-width="1.5"/>' +
+          '<circle cx="200" cy="200" r="184" fill="none" stroke="var(--ring)" stroke-width="1.25"/>' +
+          '<circle cx="200" cy="200" r="172" fill="var(--lip)"/>' +
+          '<circle cx="200" cy="200" r="160" fill="url(#dial-' + id + ')"/>' +
+          '<circle cx="200" cy="200" r="160" fill="url(#vignette-' + id + ')"/>' +
+          '<circle cx="200" cy="200" r="160" fill="url(#crystal-' + id + ')"/>' +
+          '<g transform="translate(200 200)">' +
+            "<g>" + ticks() + "</g>" +
+            '<g class="numerals">' + numerals() + "</g>" +
+            '<g data-hand="hour" data-zone="' + zone.timeZone + '"><path class="hand" d="' + HOUR + '"/></g>' +
+            '<g data-hand="minute" data-zone="' + zone.timeZone + '"><path class="hand" d="' + MINUTE + '"/></g>' +
+            '<g data-hand="second" data-zone="' + zone.timeZone + '">' +
+              '<line class="second-line" x1="0" y1="32" x2="0" y2="-148"/>' +
+              '<circle class="second-ring" cx="0" cy="-86" r="8.5"/>' +
+              '<circle class="second-tail" cx="0" cy="28" r="3.6"/>' +
+            "</g>" +
+            '<circle class="cap" r="8"/>' +
+            '<circle class="cap-bore" r="3"/>' +
+          "</g>" +
+        "</svg>" +
+      "</div>" +
+      '<p class="city">' + zone.city + "</p>"
+    );
+  }
+
+  var dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Toronto",
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+
+  function torontoDate(date) {
+    var parts = {};
+    dateFormatter.formatToParts(date).forEach(function (part) {
+      if (part.type !== "literal") parts[part.type] = part.value;
+    });
+    return parts.weekday + ", " + String(parts.month).replace(".", "") + " " + Number(parts.day) + " " + parts.year;
+  }
+
+  ZONES.forEach(function (zone) {
+    var slot = document.getElementById("slot-" + zone.id);
+    slot.innerHTML = face(zone);
+    if (zone.hero) {
+      var time = document.createElement("time");
+      time.className = "date";
+      time.id = "date";
+      slot.appendChild(time);
+    }
+  });
+
+  var hands = Array.prototype.slice.call(document.querySelectorAll("[data-hand]"));
+  var faces = Array.prototype.slice.call(document.querySelectorAll("[data-city]"));
+  var dateEl = document.getElementById("date");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var lastKey = "";
+
+  function apply(date) {
+    var cache = {};
+    hands.forEach(function (hand) {
+      var zone = hand.getAttribute("data-zone");
+      if (!cache[zone]) {
+        var hms = readHms(date, zone);
+        var sec = reduced ? hms.second : hms.second + date.getMilliseconds() / 1000;
+        var min = hms.minute + sec / 60;
+        var hr = (hms.hour % 12) + min / 60;
+        cache[zone] = { hour: hr * 30, minute: min * 6, second: sec * 6, h: hms.hour, m: hms.minute };
+      }
+      var kind = hand.getAttribute("data-hand");
+      var value = kind === "hour" ? cache[zone].hour : kind === "minute" ? cache[zone].minute : cache[zone].second;
+      hand.setAttribute("transform", "rotate(" + value + ")");
+    });
+    var key = ZONES.map(function (zone) {
+      return cache[zone.timeZone].h + ":" + cache[zone.timeZone].m;
+    }).join("|");
+    if (key === lastKey) return;
+    lastKey = key;
+    dateEl.textContent = torontoDate(date);
+    dateEl.dateTime = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(date);
+    faces.forEach(function (el) {
+      var id = el.getAttribute("data-city");
+      var zone = ZONES.filter(function (item) { return item.id === id; })[0];
+      var hms = cache[zone.timeZone];
+      var h12 = hms.h % 12 || 12;
+      var suffix = hms.h < 12 ? "AM" : "PM";
+      var min = String(hms.m).padStart(2, "0");
+      el.setAttribute("aria-label", zone.city + ", " + h12 + ":" + min + " " + suffix);
+    });
+  }
+
+  function tick() {
+    apply(new Date());
+    if (!reduced) requestAnimationFrame(tick);
+  }
+  tick();
+  if (reduced) setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

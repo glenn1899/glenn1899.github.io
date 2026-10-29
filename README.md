@@ -1,2 +1,5 @@
-# glenn1899.github.io
-Analogue clock for Toronto, Vancouver, and Beijing.
+# Clock
+
+Analogue clock for Toronto, with Vancouver and Beijing.
+
+https://glenn1899.github.io/
